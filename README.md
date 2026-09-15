@@ -26,70 +26,79 @@ explicit approval. Built with [ADK for Kotlin](https://github.com/google/adk-kot
 ## Architecture
 
 ```mermaid
-flowchart TB
+%%{init: {'theme':'base','themeVariables': {'lineColor':'#546E7A','textColor':'#212121','edgeLabelBackground':'#FFFFFF','fontSize':'14px'},'flowchart': {'wrappingWidth': 320}}}%%
+flowchart LR
   subgraph UI["Compose UI"]
-    On["Onboarding\nsurgery · date · reminder · care team"]
-    Today["Today\nday/phase · phase asset read by the app"]
-    Chk["Check-in chat\nchips · escalation sheet"]
-    Photo["Wound photo (CameraX)\n'analyzed on your device'"]
-    Jr["Journal\ncheck-ins · pain chart · observations"]
-    St["Settings\nmodel · simulated day · session stats · data log"]
+    direction TB
+    WM["WorkManager<br/>Day N notification"]
+    Chk["Check-in chat<br/>chips · escalation sheet"]
+    Photo["Wound photo<br/>CameraX · analyzed on device"]
+    Screens["Onboarding · Today<br/>Journal · Settings"]
   end
-  subgraph Cloud["RecoveryAgent (cloud)"]
-    RR["InMemoryRunner(App)\nEventsCompactionConfig(6, 1, LlmEventSummarizer)"]
-    RA["LlmAgent recovery_pal\noutputKey = last_reply"]
-    PT["ProtocolTools\nget_protocol_day"]
-    JT["JournalTools\nlog_checkin · get_recent_checkins · get_latest_wound_observation"]
-    CT["CareTeamTools (requireConfirmation)\nescalate_to_care_team · share_wound_photo"]
-    LM["LoadMemoryTool"]
-    SK["SkillToolset\n3 surgeries × phases"]
+  subgraph CLOUD["RecoveryAgent (cloud)"]
+    direction TB
+    RR["InMemoryRunner(App)<br/>EventsCompactionConfig"]
+    RA["LlmAgent recovery_pal"]
+    Tools["ProtocolTools · JournalTools<br/>get_protocol_day · log_checkin<br/>load_memory"]
+    SK["SkillToolset<br/>3 surgeries × phase assets"]
+    CT["escalate_to_care_team<br/>share_wound_photo ⚠︎ HITL"]
   end
-  subgraph Device["WoundPhotoAgent (on device)"]
-    WR["InMemoryRunner\nInMemorySessionService (one session per photo)"]
-    WA["LlmAgent wound_observer\noutputSchema = WoundObservation"]
-    LR["LiteRtLmModel\nEngineConfig(visionBackend = CPU)"]
+  WA["WoundPhotoAgent (on device)<br/>Gemma 4 E2B · LiteRtLmModel<br/>outputSchema = WoundObservation"]
+  subgraph EXT["Storage · model"]
+    direction TB
+    Store["RoomSessionService<br/>AppSearchMemoryService<br/>FileArtifactService"]
+    DB["Room · DataStore<br/>check-ins · observations"]
+    Gem["gemini-3.8-flash<br/>Firebase AI Logic"]
   end
-  subgraph Services
-    Room["RoomSessionService\nrecovery-<episode>"]
-    Mem["AppSearchMemoryService"]
-    Art["FileArtifactService\nwound-*.jpg"]
-    DB["Room: checkins · wound_observations · outbound_log"]
-    DS["DataStore: patient config"]
-    WM["WorkManager 24 h → notification"]
-  end
-  Gem["Firebase AI Logic\ngemini-3.8-flash"]
 
-  On --> DS
-  Today --> Chk & Photo & Jr & St
-  Chk --> RR --> RA --> PT & JT & CT & LM & SK
+  WM --> Chk --> RR --> RA
+  RA --> Tools & SK & CT
   RA --> Gem
-  RR --> Room & Mem & Art
-  JT --> DB
-  CT --> DB
-  Photo --> WR --> WA --> LR
-  Photo --> DB & Art
-  WM --> Chk
+  RR --> Store
+  Tools --> DB
+  Photo --> WA --> DB
+  Screens --> DB
+
+  classDef ui fill:#E0F2F1,stroke:#00897B,stroke-width:1.5px,color:#212121
+  classDef agent fill:#FFFFFF,stroke:#00897B,stroke-width:2px,color:#212121
+  classDef tool fill:#F5F5F5,stroke:#26A69A,stroke-width:1.5px,color:#212121
+  classDef ext fill:#ECEFF1,stroke:#607D8B,stroke-width:1.5px,color:#212121
+  classDef accent fill:#FBE9E7,stroke:#FF8A65,stroke-width:2px,color:#212121
+  class WM,Chk,Photo,Screens ui
+  class RR,RA agent
+  class Tools,SK tool
+  class Store,DB,Gem ext
+  class CT,WA accent
+  style UI fill:#FAFAFA,stroke:#9E9E9E,color:#212121
+  style CLOUD fill:#FAFAFA,stroke:#9E9E9E,color:#212121
+  style EXT fill:#FAFAFA,stroke:#9E9E9E,color:#212121
 ```
 
 ### A check-in that escalates
 
 ```mermaid
 sequenceDiagram
+  autonumber
   participant P as Patient
   participant App as Recovery Pal
   participant A as RecoveryAgent
   participant M as AppSearch memory
-  App->>A: "[app] The patient opened today's check-in (day 12)"
-  A->>A: get_protocol_day → day 12, phase 1, assets/phase-1-days-0-14.md
-  A->>A: load_skill(ankle-fracture-orif) · load_skill_resource(phase-1)
-  A-->>P: "Day 12 after your ankle surgery. Pain 0–10?"
+  App->>A: "[app] check-in opened (day 12)"
+  Note over A: get_protocol_day → day 12, phase 1<br/>load_skill(ankle-fracture-orif)<br/>load_skill_resource(phase-1-days-0-14.md)
+  A-->>P: "Day 12 after your surgery. Pain 0–10?"
   P->>App: "6, and I have a fever and discharge"
-  A->>A: load_skill_resource(assets/warning-signs.md)
-  A->>App: escalate_to_care_team → adk_request_confirmation
-  App-->>P: bottom sheet: reason · summary · urgency
-  P->>App: Send
-  App->>A: FunctionResponse(confirmed = true)
-  A->>A: log_checkin(pain = 6, symptoms = …)
+  Note over A: load_skill_resource(warning-signs.md)
+  A->>App: escalate_to_care_team → confirmation
+  App-->>P: sheet: reason · summary · urgency
+  alt approve
+    P->>App: Send
+    App->>A: FunctionResponse(confirmed = true)
+    Note over A: care team notified · outbound log
+  else cancel
+    P->>App: Cancel
+    App->>A: FunctionResponse(confirmed = false)
+  end
+  Note over A: log_checkin(pain = 6, symptoms = …)
   App->>M: addSessionToMemory(session)
   A-->>P: closing line + phase reminder
 ```
