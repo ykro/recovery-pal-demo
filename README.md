@@ -7,6 +7,8 @@ explicit approval. Built with [ADK for Kotlin](https://github.com/google/adk-kot
 
 > Educational demo, not a medical device. It does not diagnose. Protocol text is illustrative.
 
+One of three ADK for Kotlin demos, each a standalone repo. The other two: [Cart Shop](https://github.com/ykro/cart-shop-demo) · [Trail Aid](https://github.com/ykro/trail-aid-demo).
+
 ## What you'll learn
 
 | ADK feature | Where |
@@ -26,52 +28,45 @@ explicit approval. Built with [ADK for Kotlin](https://github.com/google/adk-kot
 ## Architecture
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables': {'lineColor':'#546E7A','textColor':'#212121','edgeLabelBackground':'#FFFFFF','fontSize':'14px'},'flowchart': {'wrappingWidth': 320}}}%%
+%%{init: {'theme':'base','themeVariables': {'lineColor':'#546E7A','textColor':'#212121','edgeLabelBackground':'#FFFFFF','fontSize':'14px'},'flowchart': {'wrappingWidth': 260, 'nodeSpacing': 28, 'rankSpacing': 48}}}%%
 flowchart LR
-  subgraph UI["Compose UI"]
-    direction TB
-    WM["WorkManager<br/>Day N notification"]
-    Chk["Check-in chat<br/>chips · escalation sheet"]
-    Photo["Wound photo<br/>CameraX · analyzed on device"]
-    Screens["Onboarding · Today<br/>Journal · Settings"]
-  end
-  subgraph CLOUD["RecoveryAgent (cloud)"]
-    direction TB
-    RR["InMemoryRunner(App)<br/>EventsCompactionConfig"]
-    RA["LlmAgent recovery_pal"]
-    Tools["ProtocolTools · JournalTools<br/>get_protocol_day · log_checkin<br/>load_memory"]
-    SK["SkillToolset<br/>3 surgeries × phase assets"]
-    CT["escalate_to_care_team<br/>share_wound_photo ⚠︎ HITL"]
-  end
-  WA["WoundPhotoAgent (on device)<br/>Gemma 4 E2B · LiteRtLmModel<br/>outputSchema = WoundObservation"]
-  subgraph EXT["Storage · model"]
-    direction TB
-    Store["RoomSessionService<br/>AppSearchMemoryService<br/>FileArtifactService"]
-    DB["Room · DataStore<br/>check-ins · observations"]
-    Gem["gemini-3.8-flash<br/>Firebase AI Logic"]
-  end
-
-  WM --> Chk --> RR --> RA
-  RA --> Tools & SK & CT
-  RA --> Gem
-  RR --> Store
-  Tools --> DB
-  Photo --> WA --> DB
-  Screens --> DB
+  N["Day N notification<br/>WorkManager"] --> Chk["Check-in chat"]
+  Chk --> RT["AgentRuntime<br/>compaction · memory"]
+  RT --> AG["LlmAgent<br/>recovery_pal"]
+  AG --> T["Tools<br/>protocol day · journal"]
+  AG --> SK["Skills<br/>3 surgeries × phases"]
+  AG --> ESC["escalate_to_care_team<br/>⚠︎ needs approval"]
+  AG --> G["gemini-3.8-flash<br/>Firebase AI Logic"]
 
   classDef ui fill:#E0F2F1,stroke:#00897B,stroke-width:1.5px,color:#212121
   classDef agent fill:#FFFFFF,stroke:#00897B,stroke-width:2px,color:#212121
   classDef tool fill:#F5F5F5,stroke:#26A69A,stroke-width:1.5px,color:#212121
-  classDef ext fill:#ECEFF1,stroke:#607D8B,stroke-width:1.5px,color:#212121
-  classDef accent fill:#FBE9E7,stroke:#FF8A65,stroke-width:2px,color:#212121
-  class WM,Chk,Photo,Screens ui
-  class RR,RA agent
-  class Tools,SK tool
-  class Store,DB,Gem ext
-  class CT,WA accent
-  style UI fill:#FAFAFA,stroke:#9E9E9E,color:#212121
-  style CLOUD fill:#FAFAFA,stroke:#9E9E9E,color:#212121
-  style EXT fill:#FAFAFA,stroke:#9E9E9E,color:#212121
+  classDef model fill:#B2DFDB,stroke:#00695C,stroke-width:2px,color:#212121
+  classDef accent fill:#FFF3E0,stroke:#EF6C00,stroke-width:2px,color:#212121
+  class N,Chk ui
+  class RT,AG agent
+  class T,SK tool
+  class G model
+  class ESC accent
+```
+
+The wound photo never touches the cloud: a second, tool-less agent runs on device.
+
+```mermaid
+%%{init: {'theme':'base','themeVariables': {'lineColor':'#546E7A','textColor':'#212121','edgeLabelBackground':'#FFFFFF','fontSize':'14px'},'flowchart': {'wrappingWidth': 260, 'nodeSpacing': 28, 'rankSpacing': 48}}}%%
+flowchart LR
+  P["Wound photo<br/>CameraX"] --> WA["WoundPhotoAgent<br/>no tools · outputSchema"]
+  WA --> L["Gemma 4 E2B<br/>on device, never cloud"]
+  WA --> J["WoundObservation<br/>saved to journal"]
+
+  classDef ui fill:#E0F2F1,stroke:#00897B,stroke-width:1.5px,color:#212121
+  classDef agent fill:#FFFFFF,stroke:#00897B,stroke-width:2px,color:#212121
+  classDef tool fill:#F5F5F5,stroke:#26A69A,stroke-width:1.5px,color:#212121
+  classDef accent fill:#FFF3E0,stroke:#EF6C00,stroke-width:2px,color:#212121
+  class P ui
+  class WA agent
+  class J tool
+  class L accent
 ```
 
 ### A check-in that escalates
@@ -83,20 +78,18 @@ sequenceDiagram
   participant App as Recovery Pal
   participant A as RecoveryAgent
   participant M as AppSearch memory
-  App->>A: "[app] check-in opened (day 12)"
-  Note over A: get_protocol_day → day 12, phase 1<br/>load_skill(ankle-fracture-orif)<br/>load_skill_resource(phase-1-days-0-14.md)
-  A-->>P: "Day 12 after your surgery. Pain 0–10?"
-  P->>App: "6, and I have a fever and discharge"
+  App->>A: check-in opened (day 12)
+  Note over A: get_protocol_day → phase 1<br/>load_skill(ankle-fracture-orif)<br/>load_skill_resource(phase-1-days-0-14.md)
+  A-->>P: "Day 12. Pain 0–10?"
+  P->>App: "6, with fever and discharge"
   Note over A: load_skill_resource(warning-signs.md)
-  A->>App: escalate_to_care_team → confirmation
-  App-->>P: sheet: reason · summary · urgency
+  A->>App: escalate_to_care_team → approval sheet
   alt approve
     P->>App: Send
-    App->>A: FunctionResponse(confirmed = true)
-    Note over A: care team notified · outbound log
+    App->>A: confirmed = true → care team notified
   else cancel
     P->>App: Cancel
-    App->>A: FunctionResponse(confirmed = false)
+    App->>A: confirmed = false
   end
   Note over A: log_checkin(pain = 6, symptoms = …)
   App->>M: addSessionToMemory(session)
