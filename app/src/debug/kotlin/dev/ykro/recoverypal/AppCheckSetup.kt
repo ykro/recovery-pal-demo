@@ -9,7 +9,7 @@ import timber.log.Timber
 /**
  * Debug builds attest with the App Check *debug provider*: Play Integrity cannot vouch for a debug
  * APK on an emulator. On first launch logcat prints
- * `Enter this debug secret into the allow list in the Firebase Console`; register that token under
+ * `Firebase App Check debug token: …`; register that token under
  * App Check → Recovery Pal → Manage debug tokens. The release source set installs Play Integrity instead.
  */
 object AppCheckSetup {

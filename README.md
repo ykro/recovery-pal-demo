@@ -111,7 +111,7 @@ sequenceDiagram
    **App Check**: Firebase AI Logic rejects unattested requests once enforcement is on. Register the
    signing certificate's SHA-256 (`./gradlew signingReport`) for Play Integrity; debug builds install
    the *debug provider* instead (`src/debug/.../AppCheckSetup.kt`), so on first launch copy the token
-   logcat prints (`Enter this debug secret into the allow list`) into App Check → *Manage debug tokens*.
+   logcat prints (`Firebase App Check debug token: …`) into App Check → *Manage debug tokens*.
 2. **On-device model** (wound photos): Settings → *Download over Wi-Fi*, or
    `adb push gemma-4-E2B-it.litertlm /sdcard/Android/data/dev.ykro.recoverypal/files/`.
    Without it the photo screen says analysis is unavailable and never falls back to the cloud.
