@@ -46,6 +46,8 @@ timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-ai = { module = "com.google.firebase:firebase-ai" }
+firebase-appcheck-playintegrity = { module = "com.google.firebase:firebase-appcheck-playintegrity" }
+firebase-appcheck-debug = { module = "com.google.firebase:firebase-appcheck-debug" }
 adk-core = { module = "com.google.adk:google-adk-kotlin-core-android", version.ref = "adk" }
 adk-processor = { module = "com.google.adk:google-adk-kotlin-processor", version.ref = "adk" }
 adk-firebase = { module = "com.google.adk:google-adk-kotlin-firebase-android", version.ref = "adk" }

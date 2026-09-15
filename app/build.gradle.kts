@@ -82,6 +82,8 @@ dependencies {
   implementation(libs.coil.compose)
 
   implementation(libs.firebase.ai)
+  implementation(libs.firebase.appcheck.playintegrity)
+  debugImplementation(libs.firebase.appcheck.debug)
   implementation(libs.adk.core)
   implementation(libs.adk.firebase)
   implementation(libs.adk.litertlm)
