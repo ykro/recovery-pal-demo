@@ -17,13 +17,16 @@ One of three ADK for Kotlin demos, each a standalone repo. The other two: [Cart 
 | Session resumability with `RoomSessionService`: **one session for the whole episode**, appended to every day | `agent/AgentRuntime.kt`, `ui/checkin/` |
 | Context compaction (`App` + `EventsCompactionConfig` + `LlmEventSummarizer`) so a 6-week session stays bounded | `AgentRuntime.recoveryRunner`, Settings → Session |
 | On-device memory with `AppSearchMemoryService` + `LoadMemoryTool` ("it hurts more in the mornings" recalled weeks later) | `AgentRuntime.indexSessionInMemory`, the `load_memory` chip |
-| Hybrid: cloud `LlmAgent` (Firebase AI Logic, `gemini-3.8-flash`) and on-device `LlmAgent` (`LiteRtLmModel`, Gemma 4 E2B) sharing one app | `agent/Agents.kt` |
+| Hybrid: cloud `LlmAgent` (Firebase AI Logic, `gemini-3.8-flash`) and on-device `LlmAgent` (`LiteRtLmModel`, [Gemma 4 E2B](https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm)) sharing one app | `agent/Agents.kt` |
 | Image input on device: the JPEG goes to the model as `Part(inlineData = Blob("image/jpeg"))` and never to the cloud | `AgentRuntime.analyzeWound` |
 | Structured output (`outputSchema`) for the descriptive `WoundObservation` | `agent/WoundObservation.kt` |
 | Human-in-the-loop (`requireConfirmation = true`) for `escalate_to_care_team` and `share_wound_photo` | `agent/Tools.kt`, `ui/components/ConfirmationSheet.kt` |
 | `FileArtifactService` for private photo storage | `AgentRuntime.savePhoto` |
 | WorkManager as the trigger: the OS posts "Day N check-in", the worker never calls the model | `work/ReminderWorker.kt` |
 | Tool errors via `FunctionTool.ERROR_KEY` | `agent/Tools.kt` |
+
+The three protocols are not arbitrary: the author went through a laparoscopic appendectomy and an
+ankle fracture, and both recoveries raised the same kind of questions between clinic hours.
 
 ## Architecture
 
@@ -153,10 +156,12 @@ More: [analyzing](docs/screenshots/04b-analyzing.png) · [saved to journal](docs
 
 ## Verified on the emulator (Pixel_9_API_36)
 
-Onboarding, Today (phase asset read straight from the skill), on-device wound photo with the
-emulated camera (schema-valid `WoundObservation` in ~3 min on the emulator CPU), journal, WorkManager
-notification and its deep link into the check-in. The cloud check-in (skills, compaction, memory,
-escalation) needs your `google-services.json`.
+Onboarding, Today (phase asset read straight from the skill), WorkManager notification and its deep
+link, the cloud check-in with `gemini-3.8-flash` (`get_protocol_day` → `load_skill` → exactly one
+phase asset), a warning sign → `warning-signs.md` → `escalate_to_care_team` approval sheet → sent and
+listed under *Data that left the device*, `load_memory` recalling a preference from an earlier
+check-in, one session with 50 events and 2 compaction summaries, and the on-device wound photo
+(`WoundObservation` in 8.96 s with the emulated camera, no network).
 
 ## Layout
 
