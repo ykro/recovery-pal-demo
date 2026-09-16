@@ -96,6 +96,33 @@ sequenceDiagram
   A-->>P: closing line + phase reminder
 ```
 
+## Screens
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/01-onboarding.png" width="230" alt="Onboarding with the three surgeries and the disclaimer"><br><sub>Onboarding</sub></td>
+    <td align="center"><img src="docs/screenshots/02-today.png" width="230" alt="Today screen with day, phase, last check-in and the phase text read from the skill asset"><br><sub>Today · phase text read from the skill</sub></td>
+    <td align="center"><img src="docs/screenshots/11-notification.png" width="230" alt="Day 16 check-in notification posted by WorkManager"><br><sub>WorkManager reminder</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/03-checkin-chips.png" width="230" alt="Check-in with get_protocol_day, load_skill and one load_skill_resource chip"><br><sub>Check-in: protocol day → skill → one phase asset</sub></td>
+    <td align="center"><img src="docs/screenshots/05-escalation-sheet.png" width="230" alt="Approval sheet for escalate_to_care_team with urgency and summary"><br><sub>Warning sign → approval sheet</sub></td>
+    <td align="center"><img src="docs/screenshots/05b-escalation-sent.png" width="230" alt="Escalation sent after approval, check-in logged"><br><sub>Sent only after approval</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/04-wound-photo.png" width="230" alt="Wound photo camera with framing guide and on-device banner"><br><sub>Wound photo (CameraX)</sub></td>
+    <td align="center"><img src="docs/screenshots/04c-wound-result.png" width="230" alt="Observation card with categorical results computed on device in 8.96 seconds"><br><sub>Observation, on device, no network</sub></td>
+    <td align="center"><img src="docs/screenshots/10-memory-recall.png" width="230" alt="load_memory chip recalling a preference from an earlier check-in"><br><sub>load_memory recalls week-old preferences</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/06-journal.png" width="230" alt="Journal with pain chart and check-in entries"><br><sub>Journal</sub></td>
+    <td align="center"><img src="docs/screenshots/09-settings-session.png" width="230" alt="Settings showing one session with 50 events and 2 compaction summaries"><br><sub>One session, compaction summaries</sub></td>
+    <td align="center"><img src="docs/screenshots/07-data-left-device.png" width="230" alt="Data that left the device: escalations only, never the photo"><br><sub>Data that left the device</sub></td>
+  </tr>
+</table>
+
+More: [analyzing](docs/screenshots/04b-analyzing.png) · [saved to journal](docs/screenshots/04d-saved.png) · [settings](docs/screenshots/08-settings.png). All captured on the `Pixel_9_API_36` emulator.
+
 ## Setup
 
 1. **Firebase**: register `dev.ykro.recoverypal` in your Firebase project, enable Firebase AI Logic

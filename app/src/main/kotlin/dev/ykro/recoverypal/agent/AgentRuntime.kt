@@ -181,6 +181,7 @@ class AgentRuntime(private val context: Context, private val db: RecoveryDatabas
       Timber.e(e, "Check-in turn failed")
       emit(AgentUiEvent.Error(e.message ?: e::class.simpleName.orEmpty()))
     }
+    Timber.i("Turn finished")
     emit(AgentUiEvent.Done)
   }
 

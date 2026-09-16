@@ -45,7 +45,8 @@ fun ConfirmationSheet(toolName: String, args: Map<String, Any?>, hint: String?, 
           Text("The agent wants to call `$toolName`", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
       }
-      hint?.let {
+      // ADK's default hint is developer-facing ("Please approve or reject the tool call…"); show only custom hints.
+      hint?.takeUnless { it.startsWith("Please approve or reject the tool call") }?.let {
         Spacer(Modifier.height(10.dp))
         Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.background(AmberSoft, RoundedCornerShape(10.dp)).padding(10.dp).fillMaxWidth())
       }
