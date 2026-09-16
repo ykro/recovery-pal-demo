@@ -174,3 +174,7 @@ app/src/main/kotlin/dev/ykro/recoverypal/
 app/src/main/assets/skills/<surgery>/SKILL.md + assets/phase-*.md, warning-signs.md, ...
 app/src/test/   phase boundaries, WoundObservation schema/parse
 ```
+
+## License
+
+Apache License 2.0. Copyright 2026 Adrián Catalán. See [LICENSE](LICENSE).
